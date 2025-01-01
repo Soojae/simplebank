@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:17.2
+    container_name: postgres_container
+    restart: always
+    environment:
+      POSTGRES_USER: your_username      # 데이터베이스 사용자 이름
+      POSTGRES_PASSWORD: your_password  # 데이터베이스 사용자 비밀번호
+      POSTGRES_DB: simple_bank        # 생성할 기본 데이터베이스 이름
+    ports:
+      - "5432:5432"                      # 호스트의 5432 포트를 컨테이너의 5432 포트에 매핑
+    volumes:
+      - db_data:/var/lib/postgresql/data  # 데이터 지속성을 위한 볼륨 마운트
+
+volumes:
+  db_data:
+    driver: local

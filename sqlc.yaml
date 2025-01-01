@@ -1,0 +1,22 @@
+version: "2"
+sql:
+  - schema: "db/migration"
+    queries: "db/query"
+    engine: "postgresql"
+    gen:
+      go:
+        package: "db"
+        out: "db/sqlc"
+#        sql_package: "pgx/v5"
+#        emit_json_tags: true # json tag 추가
+#        emit_interface: true # interface 추가
+#        emit_empty_slices: true # 빈 slice 추가
+        emit_json_tags: true # json tag 추가
+        emit_prepared_queries: false # prepared query 추가
+        emit_interface: false # interface 추가
+        emit_exact_table_names: false # table name 추가
+        overrides:
+          - db_type: "timestamptz"
+            go_type: "time.Time"
+          - db_type: "uuid"
+            go_type: "github.com/google/uuid.UUID"
