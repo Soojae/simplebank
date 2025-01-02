@@ -20,13 +20,16 @@ sqlc:
 
 test:
 	go test -v -cover ./...
+
+server:
+	go run main.go
 #
 #migrate
 #
 #rollback:
 #	migrate -database postgres://your_username:your_password@localhost:5432/simple_bank?sslmode=disable -path migration down
 
-.PHONY: postgres createdb dropdb migrateup migratedown test
+.PHONY: postgres createdb dropdb migrateup migratedown test server
 #migrate rollback
 
 # command in gogo folder

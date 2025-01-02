@@ -15,6 +15,7 @@ sql:
         emit_prepared_queries: false # prepared query 추가
         emit_interface: false # interface 추가
         emit_exact_table_names: false # table name 추가
+        emit_empty_slices: true # 빈 slice 추가
         overrides:
           - db_type: "timestamptz"
             go_type: "time.Time"
