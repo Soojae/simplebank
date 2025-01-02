@@ -23,13 +23,17 @@ test:
 
 server:
 	go run main.go
+
+mock:
+	mockgen -package mockdb -destination=db/mock/store.go github.com/soojae/simplebank/db/sqlc Store
+
 #
 #migrate
 #
 #rollback:
 #	migrate -database postgres://your_username:your_password@localhost:5432/simple_bank?sslmode=disable -path migration down
 
-.PHONY: postgres createdb dropdb migrateup migratedown test server
+.PHONY: postgres createdb dropdb migrateup migratedown test server mock
 #migrate rollback
 
 # command in gogo folder
