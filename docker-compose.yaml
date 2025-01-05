@@ -1,9 +1,6 @@
 services:
-  db:
-    image: postgres:17.2
-    container_name: postgres_container
-    networks:
-      - bank-network
+  postgres:
+    image: postgres:17.2-alpine3.21
     restart: always
     environment:
       POSTGRES_USER: your_username
@@ -14,23 +11,21 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
-  simplebank:
+  api:
     build:                         # Dockerfile을 기반으로 빌드
       context: .                   # Dockerfile의 위치 (현재 디렉토리)
       dockerfile: Dockerfile       # 사용할 Dockerfile (기본값은 'Dockerfile')
     image: simplebank:latest       # 생성될 이미지 이름과 태그를 지정
-    container_name: simplebank_container
-    networks:
-      - bank-network
     ports:
       - "8080:8080"
     environment:
-      DB_SOURCE: "postgresql://your_username:your_password@postgres_container:5432/simple_bank?sslmode=disable"
+      DB_SOURCE: "postgresql://your_username:your_password@postgres:5432/simple_bank?sslmode=disable"
+    depends_on:
+      - postgres
+    entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]
+    command: ["/app/main"]
 
 volumes:
   db_data:
     driver: local
 
-networks:
-  bank-network:
-    driver: bridge
