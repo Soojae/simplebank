@@ -2,16 +2,35 @@ services:
   db:
     image: postgres:17.2
     container_name: postgres_container
+    networks:
+      - bank-network
     restart: always
     environment:
-      POSTGRES_USER: your_username      # 데이터베이스 사용자 이름
-      POSTGRES_PASSWORD: your_password  # 데이터베이스 사용자 비밀번호
-      POSTGRES_DB: simple_bank        # 생성할 기본 데이터베이스 이름
+      POSTGRES_USER: your_username
+      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: simple_bank
     ports:
-      - "5432:5432"                      # 호스트의 5432 포트를 컨테이너의 5432 포트에 매핑
+      - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data  # 데이터 지속성을 위한 볼륨 마운트
+      - db_data:/var/lib/postgresql/data
+
+  simplebank:
+    build:                         # Dockerfile을 기반으로 빌드
+      context: .                   # Dockerfile의 위치 (현재 디렉토리)
+      dockerfile: Dockerfile       # 사용할 Dockerfile (기본값은 'Dockerfile')
+    image: simplebank:latest       # 생성될 이미지 이름과 태그를 지정
+    container_name: simplebank_container
+    networks:
+      - bank-network
+    ports:
+      - "8080:8080"
+    environment:
+      DB_SOURCE: "postgresql://your_username:your_password@postgres_container:5432/simple_bank?sslmode=disable"
 
 volumes:
   db_data:
     driver: local
+
+networks:
+  bank-network:
+    driver: bridge
