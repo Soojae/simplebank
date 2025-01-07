@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	mockdb "github.com/soojae/simplebank/db/mock"
 	db "github.com/soojae/simplebank/db/sqlc"
+	"github.com/soojae/simplebank/token"
 	"github.com/soojae/simplebank/util"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type eqCreateUserParamsMatcher struct {
@@ -192,6 +194,66 @@ func TestCreateUserAPI(t *testing.T) {
 			tc.checkResponse(t, recorder)
 		})
 	}
+}
+
+func TestLoginUserAPI(t *testing.T) {
+	user, password := randomUser(t)
+
+	testCases := []struct {
+		name          string
+		body          gin.H
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
+	}{{
+		name: "OK",
+		body: gin.H{
+			"username": user.Username,
+			"password": password,
+		},
+		setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+			addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+		},
+		buildStubs: func(store *mockdb.MockStore) {
+			store.EXPECT().
+				GetUser(gomock.Any(), gomock.Eq(user.Username)).
+				Times(1).
+				Return(user, nil)
+			store.EXPECT().
+				CreateSession(gomock.Any(), gomock.Any()).
+				Times(1)
+		},
+		checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			require.Equal(t, http.StatusOK, recorder.Code)
+		},
+	}}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(store)
+
+			// start test server and send request
+			server := newTestServer(t, store)
+			recorder := httptest.NewRecorder()
+
+			// Marshal body data to JSON
+			data, err := json.Marshal(tc.body)
+			require.NoError(t, err)
+
+			url := "/users/login"
+			request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+			require.NoError(t, err)
+
+			server.router.ServeHTTP(recorder, request)
+			tc.checkResponse(t, recorder)
+		})
+	}
+
 }
 
 func randomUser(t *testing.T) (user db.User, password string) {
