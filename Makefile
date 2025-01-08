@@ -33,13 +33,17 @@ server:
 mock:
 	mockgen -package mockdb -destination=db/mock/store.go github.com/soojae/simplebank/db/sqlc Store
 
+proto:
+	rm -rf pb/*.go
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative --go-grpc_out=pb --go-grpc_opt=paths=source_relative proto/*.proto
+
 #
 #migrate
 #
 #rollback:
 #	migrate -database postgres://your_username:your_password@localhost:5432/simple_bank?sslmode=disable -path migration down
 
-.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 test server mock
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 test server mock proto
 #migrate rollback
 
 # command in gogo folder
