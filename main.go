@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
+	"github.com/rakyll/statik/fs"
 	"github.com/soojae/simplebank/api"
 	db "github.com/soojae/simplebank/db/sqlc"
+	_ "github.com/soojae/simplebank/doc/statik"
 	"github.com/soojae/simplebank/gapi"
 	"github.com/soojae/simplebank/pb"
 	"github.com/soojae/simplebank/util"
@@ -30,8 +32,9 @@ func main() {
 	}
 
 	store := db.NewStore(conn)
-	go runGatewayServer(config, store)
-	runGrpcServer(config, store)
+	//go runGatewayServer(config, store)
+	//runGrpcServer(config, store)
+	runGinServer(config, store)
 
 }
 
@@ -85,8 +88,13 @@ func runGatewayServer(config util.Config, store db.Store) {
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux)
 
-	fs := http.FileServer(http.Dir("./doc/swagger"))
-	mux.Handle("/swagger/", http.StripPrefix("/swagger/", fs))
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal("cannot create statik file system", err)
+	}
+
+	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
+	mux.Handle("/swagger/", swaggerHandler)
 
 	listener, err := net.Listen("tcp", config.HTTPSServerAddress)
 	if err != nil {
