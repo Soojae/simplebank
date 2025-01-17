@@ -3,6 +3,8 @@ package gapi
 import (
 	"context"
 	"database/sql"
+	"time"
+
 	db "github.com/soojae/simplebank/db/sqlc"
 	"github.com/soojae/simplebank/pb"
 	"github.com/soojae/simplebank/util"
@@ -10,14 +12,21 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"time"
 )
 
 func (server *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	// TODO: add Authorization
+	authPayload, err := server.authorizeUser(ctx)
+	if err != nil {
+		return nil, unauthorizedError(err)
+	}
+
 	violations := validateUpdateUserRequest(req)
 	if violations != nil {
 		return nil, invalidArgumentError(violations)
+	}
+
+	if authPayload.Username != req.GetUsername() {
+		return nil, status.Errorf(codes.PermissionDenied, "cannot update other user's info")
 	}
 
 	arg := db.UpdateUserParams{
