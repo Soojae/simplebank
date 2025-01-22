@@ -43,6 +43,7 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 
 	}
 
+	// Send Verify Email
 	rsp := &pb.CreateUserResponse{
 		User: convertUser(user),
 	}
